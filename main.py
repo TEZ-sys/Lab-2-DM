@@ -1,44 +1,42 @@
-from collections import defaultdict
-from heapq import heappop, heappush
-
+import numpy as np
 
 def find_eulerian_cycle(graph):
-    for vertex in graph:
-        in_degrees, out_degrees = graph[vertex]
-        if in_degrees != out_degrees:
-            return None
 
+    num_vertices = len(graph)
+    eulerian_cycle = []
     stack = [0]
-    path = []
+
     while stack:
-        vertex = stack[-1]
-        in_degrees, out_degrees = graph[vertex]
-        if out_degrees > 0:
-            _, next_vertex, weight = heappop(out_degrees)
-            graph[vertex][1] = out_degrees
-            stack.append(next_vertex)
-            path.append((vertex, next_vertex, weight))
+        u = stack[-1]
+        if any(graph[u]):
+            v = 0
+            while v < num_vertices and graph[u][v] == 0:
+                v += 1
+
+            eulerian_cycle.append((u, v))
+            graph[u][v] = 0
+            graph[v][u] = 0
+            stack.append(v)
         else:
             stack.pop()
 
-    return path[::-1]
+    return eulerian_cycle
+
+def read_graph_from_txt(file_path):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+        num_vertices = int(lines[0])
+        graph = np.zeros((num_vertices, num_vertices), dtype=int)
+        for i in range(1, len(lines)):
+            weights = lines[i].strip().split()
+            for j in range(len(weights)):
+                graph[i-1][j] = int(weights[j])
+    return graph
 
 
-if __name__ == '__main__':
-    with open('input.txt', 'r') as file:
-        num_vertices = int(file.readline())
-        graph = defaultdict(lambda: [0, []])
-        for i in range(num_vertices):
-            weights = list(map(int, file.readline().split()))
-            for j, weight in enumerate(weights):
-                if weight > 0:
-                    graph[i][1].append((weight, j))
-                    graph[j][0] += 1
-
-    eulerian_cycle = find_eulerian_cycle(graph)
-    if eulerian_cycle:
-        total_weight = sum(weight for _, _, weight in eulerian_cycle)
-        print(f'Ейлерів цикл: {" -> ".join(str(v) for v, _, _ in eulerian_cycle)}')
-        print(f'Загальна вага: {total_weight}')
-    else:
-        print('Граф не має Ейлерівого циклу')
+file_path = 'input.txt'
+graph = read_graph_from_txt(file_path)
+eulerian_cycle = find_eulerian_cycle(graph)
+print("Eulerian Cycle:")
+for edge in eulerian_cycle:
+    print(f"{edge[0]} -> {edge[1]}")
